@@ -29,35 +29,51 @@
             (push node siblings))))
       nil))
 
-;--------------------------------------------------------------------------
+;;--------------------------------------------------------------------------
 
-(defun process-stream (stream)
-  (do ((text-lines nil)
-       (text (read-line stream nil) (read-line stream nil)))
-      ((equal text nil) (print-tree (build-nodes (mapcar 'parse-text-line (reverse text-lines)))))
-    (push text text-lines)))
-
-(defun print-tree (nodes &optional (indent 0))
+(defun show-indented (nodes &optional (indent 0))
   (dolist (node nodes)
     ;; e.g. if indent=4, this formats the content with "~4t~a~%"; if indent=0, the format string is just "~a~%"
     ;; format syntax ref: http://www.gigamonkeys.com/book/a-few-format-recipes.html
     (format t (format nil "~[~:;~:*~~~at~]~~a~~%" indent) (getf node :content))
-    (print-tree (getf node :children) (+ 4 indent)))
-  nodes)
+    (show-indented (getf node :children) (+ 4 indent)))
+  t)
 
-;--------------------------------------------------------------------------
+(defun show-parents (nodes &optional (parents nil))
+  (dolist (node nodes)
+    (let* ((children (getf node :children))
+	   (content (getf node :content))
+	   (text (if parents (format nil "~a::~a" parents content) content)))
+      (if children
+	  (show-parents children text)
+	  (format t "~a~%" text))))
+  t)
 
-;;(defun my-command-line ()
-;;  (or 
-;;   #+CLISP *args*
-;;   #+LISPWORKS system:*line-arguments-list*
-;;   #+CMU extensions:*command-line-words*
-;;   nil))
-;;
-;;(let ((args (my-command-line)))
-;;  (if args
-;;      (dolist (filename args)
-;;        (with-open-file (stream filename)
-;;          (process-stream stream)))
-;;      (process-stream *standard-input*)))
+(defun process-stream (stream show-func)
+  (do ((text-lines nil)
+       (text (read-line stream nil) (read-line stream nil)))
+      ((equal text nil)
+       (funcall show-func (build-nodes (mapcar 'parse-text-line (reverse text-lines)))))
+    (push text text-lines)))
 
+;;--------------------------------------------------------------------------
+
+
+(defun my-command-line ()
+  (or 
+   #+CLISP *args*
+   #+LISPWORKS system:*line-arguments-list*
+   #+CMU extensions:*command-line-words*
+   nil))
+
+(let ((args (my-command-line))
+      (sig-char #\*))
+  (if args
+      (let ((show-func (if (equal sig-char (elt (first args) 0))
+			   (intern (string-upcase (remove sig-char (pop args) :count 1)))
+			   'show-parents)))
+	(dolist (filename args)
+	  (if (equal "-" filename)
+	      (process-stream *standard-input* show-func)
+	      (with-open-file (stream filename)
+		(process-stream stream show-func)))))))
