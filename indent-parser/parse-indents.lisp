@@ -26,12 +26,14 @@
               (siblings (build-nodes (pop chunks))))
           (let ((node (list :content (getf me :content))))
             (if children (setf (getf node :children) children))
+            ;; (format t "~a~%" (getf node :content))
             (push node siblings))))
       nil))
 
 ;;--------------------------------------------------------------------------
 
 (defun show-indented (nodes &optional (indent 0))
+  ;; print out the contents of a tree of nodes, indented appropriately
   (dolist (node nodes)
     ;; e.g. if indent=4, this formats the content with "~4t~a~%"; if indent=0, the format string is just "~a~%"
     ;; format syntax ref: http://www.gigamonkeys.com/book/a-few-format-recipes.html
@@ -40,16 +42,18 @@
   t)
 
 (defun show-parents (nodes &optional (parents nil))
+  ;; print out the leaves of a tree with their parent path (root::parent::child::leaf)
   (dolist (node nodes)
     (let* ((children (getf node :children))
-	   (content (getf node :content))
-	   (text (if parents (format nil "~a::~a" parents content) content)))
+           (content (getf node :content))
+           (text (if parents (format nil "~a::~a" parents content) content)))
       (if children
-	  (show-parents children text)
-	  (format t "~a~%" text))))
+          (show-parents children text)
+          (format t "~a~%" text))))
   t)
 
 (defun process-stream (stream show-func)
+  ;; build a tree from an input stream of indented text
   (do ((text-lines nil)
        (text (read-line stream nil) (read-line stream nil)))
       ((equal text nil)
@@ -70,10 +74,10 @@
       (sig-char #\*))
   (if args
       (let ((show-func (if (equal sig-char (elt (first args) 0))
-			   (intern (string-upcase (remove sig-char (pop args) :count 1)))
-			   'show-parents)))
-	(dolist (filename args)
-	  (if (equal "-" filename)
-	      (process-stream *standard-input* show-func)
-	      (with-open-file (stream filename)
-		(process-stream stream show-func)))))))
+                           (intern (string-upcase (remove sig-char (pop args) :count 1)))
+                           'show-parents)))
+        (dolist (filename args)
+          (if (equal "-" filename)
+              (process-stream *standard-input* show-func)
+              (with-open-file (stream filename)
+                (process-stream stream show-func)))))))
