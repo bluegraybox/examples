@@ -7,7 +7,7 @@
 
 -module(parse_indents).
 %% Need to export our output functions so we can invoke them.
--export([main/1, show_path/1, show_indented/1]).
+-export([main/1, show_path/1, show_indented/1, build_nodes/3]).
 %% Needs to be compiled so we can specify our output functions.
 -mode(compile).
 -record(line, {content, indent}).
@@ -32,18 +32,24 @@ split_list(Criterion, DataList) ->
             [[First|ChildLines], SiblingLines]
     end.
 
-build_nodes([]) -> [];
-build_nodes(Lines) ->
+build_nodes(Parent, Group, []) -> Parent ! {Group, []};
+build_nodes(Parent, Group, Lines) ->
     [First|Rest] = Lines,
     %% split off our children from the rest of the Lines.
     %% the first line with an indent =< ours is a sibling, not a child
     Criterion = fun(X) -> X#line.indent =< First#line.indent end,
     [ChildLines, SiblingLines] = split_list(Criterion, Rest),
-    Children = build_nodes(ChildLines),
-    Siblings = build_nodes(SiblingLines),
-    Node = #node{content=First#line.content, children=Children},
-    io:fwrite( "[~s]~n", [Node#node.content]),
-    [Node|Siblings].
+    spawn(?MODULE, build_nodes, [self(), children, ChildLines]),
+    spawn(?MODULE, build_nodes, [self(), siblings, SiblingLines]),
+    receive
+        {children, Children} ->
+            Node = #node{content=First#line.content, children=Children}
+    end,
+    receive
+        {siblings, Siblings} ->
+            io:fwrite( "[~s] ~p~n", [Node#node.content, self()]),
+            Parent ! {Group, [Node|Siblings]}
+    end.
 
 %%--------------------------------------------------------------------------
 
@@ -84,8 +90,10 @@ process_stream(Stream, ShowFunc) ->
     %% build a tree from an input stream of indented text
     Text = get_all_lines(Stream),
     Lines = lists:map(fun(Line) -> parse_text_line(Line) end, Text),
-    Nodes = build_nodes(Lines),
-    ShowFunc(Nodes).
+    spawn(?MODULE, build_nodes, [self(), roots, Lines]),
+    receive
+        {roots, Nodes} -> ShowFunc(Nodes)
+    end.
 
 process_file(Filename, ShowFunc) ->
     case Filename of
