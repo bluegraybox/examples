@@ -100,14 +100,14 @@ process_file(Filename, ShowFunc) ->
 %%--------------------------------------------------------------------------
 
 main([]) ->
-    io:format("usage: parse_indents.erl [[:module]:display_function] <filenames...>\n"),
+    io:format("usage: ~s.erl [[:module]:display_function] <filenames...>~n", [?MODULE]),
     halt(1);
 main([[$\:|FuncName]|Filenames]) ->
     %% this is only invoked if the first param begins with ':'
     FuncList = lists:map(fun(List) -> list_to_atom(List) end, string:tokens(FuncName, ":")),
     ShowFunc = case FuncList of
         [Mod, Func] -> fun(Nodes) -> apply(Mod, Func, [Nodes]) end;
-        [Func] -> fun(Nodes) -> apply(Func, [Nodes]) end
+        [Func] -> fun(Nodes) -> apply(?MODULE, Func, [Nodes]) end
     end,
     main(ShowFunc, Filenames);
 main(Filenames) ->
