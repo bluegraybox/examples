@@ -29,7 +29,7 @@ split_list(Criterion, DataList) ->
             [[], DataList];
         _ ->
             [ChildLines, SiblingLines] = split_list(Criterion, Rest),
-            [[First]++ChildLines, SiblingLines]
+            [[First|ChildLines], SiblingLines]
     end.
 
 build_nodes([]) -> [];
@@ -43,7 +43,7 @@ build_nodes(Lines) ->
     Siblings = build_nodes(SiblingLines),
     Node = #node{content=First#line.content, children=Children},
     io:fwrite( "[~s]~n", [Node#node.content]),
-    [Node]++Siblings.
+    [Node|Siblings].
 
 %%--------------------------------------------------------------------------
 
@@ -100,9 +100,10 @@ process_file(Filename, ShowFunc) ->
 %%--------------------------------------------------------------------------
 
 main([]) ->
-    io:format("usage: parse_indents.erl [:function_name] <filenames...>\n"),
+    io:format("usage: parse_indents.erl [[:module]:display_function] <filenames...>\n"),
     halt(1);
 main([[$\:|FuncName]|Filenames]) ->
+    %% this is only invoked if the first param begins with ':'
     FuncList = lists:map(fun(List) -> list_to_atom(List) end, string:tokens(FuncName, ":")),
     ShowFunc = case FuncList of
         [Mod, Func] -> fun(Nodes) -> apply(Mod, Func, [Nodes]) end;
