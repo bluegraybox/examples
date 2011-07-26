@@ -6,21 +6,21 @@ function get_my_opts () {
     # They match options to variables, so the option "-f baz" causes the variable foo to be set to "baz".
     # Flag options don't take a parameter; we just count how often they appear.
     # So if the above example were the flags option, "-f -f -f" would cause the variable foo to be set to 3.
-    local -A _flags=$1 _values=$2
+    local -A flags=$1 values=$2
     shift 2
     local flag_opt="" value_opt="" x
-    for x in "${!_flags[@]}" ; do flag_opt="$flag_opt$x" ; done
-    for x in "${!_values[@]}" ; do value_opt="$value_opt$x:" ; done
+    for x in "${!flags[@]}" ; do flag_opt="$flag_opt$x" ; done
+    for x in "${!values[@]}" ; do value_opt="$value_opt$x:" ; done
 
     while getopts ":$flag_opt$value_opt" option "$@" ; do
         case $option in
             \?) echo "Unknown option -$OPTARG" ;;
             [$flag_opt])
-                x=${_flags[$option]}
+                x=${flags[$option]}
                 # 'export' makes these visible outside this function; otherwise, use 'local'
                 export $x=${!x:-0}
                 export $x=$((${!x} + 1)) ;;
-            [$value_opt]) export ${_values[$option]}="$OPTARG" ;;
+            [$value_opt]) export ${values[$option]}="$OPTARG" ;;
         esac
     done
     return $OPTIND
