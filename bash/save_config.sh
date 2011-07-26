@@ -11,7 +11,7 @@ base=${script%.*}
 [ -z $base ] && base=$script
 
 # Load config
-config=$dir/.$base.cfg
+config=$dir/.${base#.}.cfg
 [ -f $config ] && source $config
 # Set default values if not loaded from config
 foo=${foo:-"my foo"}
