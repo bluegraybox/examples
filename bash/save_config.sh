@@ -13,26 +13,33 @@ base=${script%.*}
 # Load config
 config=$dir/.${base#.}.cfg
 [ -f $config ] && source $config
+
 # Set default values if not loaded from config
-foo=${foo:-"my foo"}
-bar=${bar:-"my bar"}
-for x in foo bar ; do
-    old_x=${!x}
+# defaults associates variables with default values.
+declare -A defaults=([foo]="my foo" [bar]="my bar" [baz]="sensible")
+for x in ${!defaults[@]} ; do
+    d=${defaults[$x]}
+    declare $x="${!x:-$d}"
+done
+vars="${!defaults[@]}"  # keys of the defaults
+for x in $vars ; do
+    old_x="${!x}"
     # echo -n "What is $x? [${!x}] "
     read -p "What is $x? [${!x}] " new_x
-    test -n $new_x && declare $x="$new_x" && echo "$x changed to ${!x}"
+    test -n "$new_x" && declare $x="$new_x" && echo "$x changed to '${!x}'"
 done
-for x in foo bar ; do
+for x in $vars ; do
     # if it's in the config, update it.
     if grep -q "^$x=" $config ; then
         sed -i "s/^$x=.*/$x=\"${!x}\"/;" $config
     else
         echo "$x=\"${!x}\"" >> $config
     fi
-
 done
 
 exit 0
+
+#### NOTES and EXPERIMENTS
 
 read -s -p "New password: " pass
 
