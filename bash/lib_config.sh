@@ -36,7 +36,7 @@ function confirm_config () {
         old_x="${!x}"
         # echo -n "What is $x? [${!x}] "
         read -p "What is $x? [${!x}] " new_x
-        test -n "$new_x" && declare $x="$new_x" && echo "$x changed to '${!x}'"
+        test -n "$new_x" && export $x="$new_x" && echo "$x changed to '${!x}'"
     done
 }
 
@@ -59,11 +59,14 @@ function process_options () {
     # They match options to variables, so the option "-f baz" causes the variable foo to be set to "baz".
     # Flag options don't take a parameter; we just count how often they appear.
     # So if the above example were the flags option, "-f -f -f" would cause the variable foo to be set to 3.
-    local -A flags=$1 values=$2
+    local f="($1)" v="($2)"
+    local -A flags=$f values=$v
+    # declare -p flags values
     shift 2
-    local flag_opt="" value_opt="" x
+    local flag_opt="" value_opt="" value_chars="" x
     for x in "${!flags[@]}" ; do flag_opt="$flag_opt$x" ; done
-    for x in "${!values[@]}" ; do value_opt="$value_opt$x:" ; done
+    for x in "${!values[@]}" ; do value_opt="$value_opt$x:" ; value_chars="$value_chars$x" ; done
+    # echo "flags=$flag_opt, values=$value_opt"
 
     while getopts ":$flag_opt$value_opt" option "$@" ; do
         case $option in
@@ -72,8 +75,8 @@ function process_options () {
                 x=${flags[$option]}
                 # 'export' makes these visible outside this function; otherwise, use 'local'
                 export $x=${!x:-0}
-                export $x=$((${!x} + 1)) ;;
-            [$value_opt]) export ${values[$option]}="$OPTARG" ;;
+                export $x=$((${!x} + 1)) ; echo "flag: $option=${!x}" ;;
+            [$value_chars]) echo "value: $option=$OPTARG" ; export ${values[$option]}="$OPTARG" ;;
         esac
     done
     return $OPTIND
