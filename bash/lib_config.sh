@@ -59,6 +59,9 @@ function process_options () {
     # They match options to variables, so the option "-f baz" causes the variable foo to be set to "baz".
     # Flag options don't take a parameter; we just count how often they appear.
     # So if the above example were the flags option, "-f -f -f" would cause the variable foo to be set to 3.
+
+    # Manually reset OPTIND - it's a global that only gets reset when the shell restarts.
+    OPTIND=1
     local f="($1)" v="($2)"
     local -A flags=$f values=$v
     # declare -p flags values
@@ -69,14 +72,16 @@ function process_options () {
     # echo "flags=$flag_opt, values=$value_opt"
 
     while getopts ":$flag_opt$value_opt" option "$@" ; do
+        # echo "option=$option, optarg=$OPTARG, optind=$OPTIND"
         case $option in
             \?) echo "Unknown option -$OPTARG" ;;
             [$flag_opt])
                 x=${flags[$option]}
                 # 'export' makes these visible outside this function; otherwise, use 'local'
                 export $x=${!x:-0}
-                export $x=$((${!x} + 1)) ; echo "flag: $option=${!x}" ;;
-            [$value_chars]) echo "value: $option=$OPTARG" ; export ${values[$option]}="$OPTARG" ;;
+                export $x=$((${!x} + 1)) ;;
+            [$value_chars])
+                export ${values[$option]}="$OPTARG" ;;
         esac
     done
     return $OPTIND
