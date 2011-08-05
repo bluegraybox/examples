@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# invoke this script with:
+#     source /path/to/lib_config.sh $0
+
+
 # All variables used internally by this library are prefixed with _LCX_.
 
 
@@ -12,7 +16,7 @@ function _LCX_check_unset () {
 _LCX_check_unset _LCX_dir _LCX_config _LCX_log
 
 
-function init_config () {
+function _init_config () {
     local canonical=$(readlink -e -v $1)
     [ -z $canonical ] && echo "No canonical path for $1" && exit 1
     _LCX_dir=$(dirname $canonical)
@@ -24,6 +28,7 @@ function init_config () {
     _LCX_config=$_LCX_dir/.${base#.}.cfg
     _LCX_log=$_LCX_dir/${base#.}.log
 }
+_init_config "$1"
 
 
 function load_config () {
@@ -32,19 +37,25 @@ function load_config () {
 
 
 function confirm_config () {
-    for x in $* ; do
+    # $1 is a string that evaluates to an associative array.
+    # For example, "([foo]=\"your foo\" [b]=\"your bar\")"
+    # They match variables to labels, so the prompt for variable foo would be "What is your foo?"
+    declare -A vars="($1)"
+    for x in ${!vars[@]} ; do
         old_x="${!x}"
-        # echo -n "What is $x? [${!x}] "
-        read -p "What is $x? [${!x}] " new_x
+        label=${vars[$x]}
+        read -p "What is $label? [${!x}] " new_x
         test -n "$new_x" && export $x="$new_x" && echo "$x changed to '${!x}'"
     done
 }
 
 
 function save_config () {
+    # parameters are variable tokens:
+    #   save_config foo bar
     for x in $* ; do
         # if it's in the config, update it.
-        if grep -q "^$x=" $_LCX_config ; then
+        if [ -f $_LCX_config ] && grep -q "^$x=" $_LCX_config ; then
             sed -i "s/^$x=.*/$x=\"${!x}\"/;" $_LCX_config
         else
             echo "$x=\"${!x}\"" >> $_LCX_config

@@ -17,18 +17,21 @@ abs_dir=$(dirname $this)
 script=$(basename $0)
 rel_dir=$(dirname $0)
 
-source $abs_dir/../lib_config.sh
+source $abs_dir/../lib_config.sh $0
 
-### Test init_config
-init_config "$abs_dir/test_lib_config.sh"
+### Test private function _init_config
+_init_config "$abs_dir/test_lib_config.sh"
 assert_equal $_LCX_dir "$abs_dir"
 assert_equal $_LCX_config "$abs_dir/.test_lib_config.cfg"
 assert_equal $_LCX_log "$abs_dir/test_lib_config.log"
 
-init_config "$rel_dir/test_lib_config.sh"
+_init_config "$rel_dir/test_lib_config.sh"
 assert_equal $_LCX_dir "$abs_dir"
 assert_equal $_LCX_config "$abs_dir/.test_lib_config.cfg"
 assert_equal $_LCX_log "$abs_dir/test_lib_config.log"
+
+# Remove any old config file
+[ -f $_LCX_config ] && rm $_LCX_config
 
 ### Test save_config and load_config
 a="apple"
@@ -65,39 +68,65 @@ assert_equal "$c" "cow"
 assert_equal "$d" "dog"
 
 ### Test confirm_config
-# echo "Enter 'foo' for 'a' and 'bar baz' for 'b'"
-# confirm_config a b
-# assert_equal "$a" "foo"
-# assert_equal "$b" "bar baz"
+echo
+echo "Enter 'foo' for 'a' and 'bar baz' for 'b'"
+labels="[a]='My A' [b]='My B'"
+confirm_config "$labels"
+assert_equal "$a" "foo"
+assert_equal "$b" "bar baz"
 unset a b
 
 ### Test process_options
-process_options "[d]=debug [v]=verbose" "[n]=name [a]=age"
+flags="[d]=debug [v]=verbose"
+values="[n]=name [a]=age"
+process_options "$flags" "$values"
 assert_equal "$debug" ""
 assert_equal "$verbose" ""
 assert_equal "$name" ""
 assert_equal "$age" ""
 unset debug verbose name age
 
-process_options "[d]=debug [v]=verbose" "[n]=name [a]=age" -d
+process_options "$flags" "$values" -d
 assert_equal "$debug" 1
 assert_equal "$verbose" ""
 unset debug verbose name age
 
-process_options "[d]=debug [v]=verbose" "[n]=name [a]=age" -d -n "foo bar" -d
+process_options "$flags" "$values" -d -n 'foo bar' -d
 assert_equal "$debug" 2
 assert_equal "$verbose" ""
 assert_equal "$name" "foo bar"
 assert_equal "$age" ""
 unset debug verbose name age
 
-process_options "[d]=debug [v]=verbose" "[n]=name [a]=age" -a 20 -d -n "foo bar" -v -d
+process_options "$flags" "$values" -a 20 -d -n 'foo bar' -v -d
 assert_equal "$debug" 2
 assert_equal "$verbose" 1
 assert_equal "$name" "foo bar"
 assert_equal "$age" "20"
 unset debug verbose name age
 
+# Test that later value options supersede
+process_options "$flags" "$values" -a 20 -d -n 'foo bar' -v -d -n 'bar baz'
+assert_equal "$debug" 2
+assert_equal "$verbose" 1
+assert_equal "$name" "bar baz"
+assert_equal "$age" "20"
+unset debug verbose name age
+
+# Make sure it works if either flags or values isn't specified.
+process_options "$flags" "" -d -v -d
+assert_equal "$debug" 2
+assert_equal "$verbose" 1
+assert_equal "$name" ""
+assert_equal "$age" ""
+unset debug verbose name age
+
+process_options "" "$values" -a 20 -n 'foo bar'
+assert_equal "$debug" ""
+assert_equal "$verbose" ""
+assert_equal "$name" "foo bar"
+assert_equal "$age" "20"
+unset debug verbose name age
 
 echo
 echo "$pass_count passed"
