@@ -38,13 +38,14 @@ function load_config () {
 
 function confirm_config () {
     # $1 is a string that evaluates to an associative array.
-    # For example, "([foo]=\"your foo\" [b]=\"your bar\")"
-    # They match variables to labels, so the prompt for variable foo would be "What is your foo?"
+    # For example, "([foo]=\"Foo:\" [bar]=\"Bar:\")"
+    # They match variables to labels, so if foo="my foo",
+    # the prompt for variable foo would be "Foo: [my foo] "
     declare -A vars="($1)"
     for x in ${!vars[@]} ; do
         old_x="${!x}"
         label=${vars[$x]}
-        read -p "What is $label? [${!x}] " new_x
+        read -p "$label [${!x}] " new_x
         test -n "$new_x" && export $x="$new_x" && echo "$x changed to '${!x}'"
     done
 }
