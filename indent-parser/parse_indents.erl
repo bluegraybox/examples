@@ -20,25 +20,24 @@ parse_text_line(Text) ->
     Indent = length(Text) - length(Content),
     #line{content=string:strip(Content, right, $\n), indent=Indent}.
 
-split_list(_, []) -> [[],[]];
-split_list(Criterion, DataList) ->
-    %% break a list into two lists; the second begins with the first element that matches the criterion.
-    [First|Rest] = DataList,
-    case Criterion(First) of
-        true ->
-            [[], DataList];
-        _ ->
-            [ChildLines, SiblingLines] = split_list(Criterion, Rest),
-            [[First|ChildLines], SiblingLines]
-    end.
+%% Split a list of lines in two, breaking on the first line whose indent is =< the minimum.
+%% The first list gets built in reverse order, so we need to reverse it when we're done.
+%%
+%% Stop when we hit the end.
+split_list(_MinIndent, List1, []) -> [lists:reverse(List1), []];
+%% Split here if our indent is =< the minimum.
+split_list(MinIndent, List1, [First|Rest]) when First#line.indent =< MinIndent ->
+    [lists:reverse(List1), [First|Rest]];
+%% Otherwise, push the next element onto List1 and recurse.
+split_list(MinIndent, List1, [First|Rest]) ->
+    split_list(MinIndent, [First|List1], Rest).
 
 build_nodes(Parent, Group, []) -> Parent ! {Group, []};
 build_nodes(Parent, Group, Lines) ->
     [First|Rest] = Lines,
     %% split off our children from the rest of the Lines.
     %% the first line with an indent =< ours is a sibling, not a child
-    Criterion = fun(X) -> X#line.indent =< First#line.indent end,
-    [ChildLines, SiblingLines] = split_list(Criterion, Rest),
+    [ChildLines, SiblingLines] = split_list(First#line.indent, [], Rest),
     spawn(?MODULE, build_nodes, [self(), children, ChildLines]),
     spawn(?MODULE, build_nodes, [self(), siblings, SiblingLines]),
     receive
@@ -95,14 +94,12 @@ process_stream(Stream, ShowFunc) ->
         {roots, Nodes} -> ShowFunc(Nodes)
     end.
 
+process_file("-", ShowFunc) ->
+    process_stream(standard_io, ShowFunc);
 process_file(Filename, ShowFunc) ->
-    case Filename of
-        "-" -> process_stream(standard_io, ShowFunc);
-        _ ->
-            case file:open(Filename, [read]) of
-                {ok, Handle} -> process_stream(Handle, ShowFunc);
-                {error, Reason} -> io:fwrite("Error opening file ~s: ~s~n", [Filename, Reason])
-            end
+    case file:open(Filename, [read]) of
+        {ok, Handle} -> process_stream(Handle, ShowFunc);
+        {error, Reason} -> io:fwrite("Error opening file ~s: ~s~n", [Filename, Reason])
     end.
 
 %%--------------------------------------------------------------------------
