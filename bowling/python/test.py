@@ -116,61 +116,61 @@ class FrameTest(unittest.TestCase):
 
 
 class GameTest(unittest.TestCase):
-	def test_game_init(self):
-		game = Game()
-		self.assertEquals(game.current_frame(), 1)
-		self.assertEquals(game.score(), 0)
+    def test_game_init(self):
+        game = Game()
+        self.assertEquals(game.current_frame(), 1)
+        self.assertEquals(game.score(), 0)
 
-	def test_add_ball(self):
-		game = Game()
-		game.add_ball(1)
-		self.assertEquals(game.current_frame(), 1)
-		self.assertEquals(game.score(), 1)
+    def test_add_ball(self):
+        game = Game()
+        game.add_ball(1)
+        self.assertEquals(game.current_frame(), 1)
+        self.assertEquals(game.score(), 1)
 
-	def test_add_second_ball(self):
-		game = Game()
-		game.add_ball(1)
-		game.add_ball(2)
-		self.assertEquals(game.score(), 3)
-		self.assertEquals(game.current_frame(), 2)
+    def test_add_second_ball(self):
+        game = Game()
+        game.add_ball(1)
+        game.add_ball(2)
+        self.assertEquals(game.score(), 3)
+        self.assertEquals(game.current_frame(), 2)
 
-	def test_strike(self):
-		game = Game()
-		game.add_ball(10)
-		self.assertEquals(game.score(), 10)
-		self.assertEquals(game.current_frame(), 2)
-	
-	def test_game_full(self):
-		expectedScore = 20
-		balls = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-		game = Game()
-		for ball in balls:
-			game.add_ball(ball)
-		self.assertEquals(expectedScore, game.score())
-		
-	def test_game_full2(self):
-		expectedScore = 47
-		balls = [1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 10, 10 ,9]
-		game = Game()
-		for ball in balls:
-			game.add_ball(ball)
-		self.assertEquals(expectedScore, game.score())
-		
-	def test_game_full3(self):
-		expectedScore = 300
-		balls = [10,10,10,10,10,10,10,10,10,10,10,10]
-		game = Game()
-		for ball in balls:
-			game.add_ball(ball)
-		self.assertEquals(expectedScore, game.score())
-		
-	def test_game_full4(self):
-		expectedScore = 173
-		balls = [7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 10]
-		game = Game()
-		for ball in balls:
-			game.add_ball(ball)
-		self.assertEquals(expectedScore, game.score())
+    def test_strike(self):
+        game = Game()
+        game.add_ball(10)
+        self.assertEquals(game.score(), 10)
+        self.assertEquals(game.current_frame(), 2)
+    
+    def test_game_full(self):
+        expectedScore = 20
+        balls = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        game = Game()
+        for ball in balls:
+            game.add_ball(ball)
+        self.assertEquals(expectedScore, game.score())
+        
+    def test_game_full2(self):
+        expectedScore = 47
+        balls = [1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 10, 10 ,9]
+        game = Game()
+        for ball in balls:
+            game.add_ball(ball)
+        self.assertEquals(expectedScore, game.score())
+        
+    def test_game_full3(self):
+        expectedScore = 300
+        balls = [10,10,10,10,10,10,10,10,10,10,10,10]
+        game = Game()
+        for ball in balls:
+            game.add_ball(ball)
+        self.assertEquals(expectedScore, game.score())
+        
+    def test_game_full4(self):
+        expectedScore = 173
+        balls = [7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 10]
+        game = Game()
+        for ball in balls:
+            game.add_ball(ball)
+        self.assertEquals(expectedScore, game.score())
 
 if __name__ == "__main__":
-	unittest.main()
+    unittest.main()
