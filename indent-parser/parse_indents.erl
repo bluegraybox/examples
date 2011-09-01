@@ -22,8 +22,7 @@ parse_text_line(Text) ->
 
 
 build_nodes(Parent, Group, []) -> Parent ! {Group, []};
-build_nodes(Parent, Group, Lines) ->
-    [First|Rest] = Lines,
+build_nodes(Parent, Group, [First|Rest]) ->
     %% split off our children from the rest of the Lines.
     %% the first line with an indent =< ours is a sibling, not a child
     IsChild = fun(L) -> L#line.indent > First#line.indent end,
@@ -97,13 +96,9 @@ process_file(Filename, ShowFunc) ->
 main([]) ->
     io:format("usage: ~s.erl [[:module]:display_function] <filenames...>~n", [?MODULE]),
     halt(1);
-main([[$\:|FuncName]|Filenames]) ->
-    %% this is only invoked if the first param begins with ':'
-    FuncList = lists:map(fun(List) -> list_to_atom(List) end, string:tokens(FuncName, ":")),
-    ShowFunc = case FuncList of
-        [Mod, Func] -> fun(Nodes) -> apply(Mod, Func, [Nodes]) end;
-        [Func] -> fun(Nodes) -> apply(?MODULE, Func, [Nodes]) end
-    end,
+main(["-f", FuncName|Filenames]) ->
+    Func = list_to_atom(FuncName),
+    ShowFunc = fun(Nodes) -> apply(?MODULE, Func, [Nodes]) end,
     main(ShowFunc, Filenames);
 main(Filenames) ->
     ShowFunc = fun(Nodes) -> show_path(Nodes) end,

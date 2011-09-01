@@ -1,5 +1,6 @@
 -module(math_server).
 -behavior(gen_server).
+-vsn("0.1.0").
 
 %% main funcs
 -export([multiply/2, divide/2]).

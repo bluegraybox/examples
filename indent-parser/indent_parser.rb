@@ -101,9 +101,10 @@ class RecursiveAction
 end
 
 class TextParser
-    def process_file(filename)
+    # def process_file(filename)
+    def process_file()
         tree = Tree.new TextNode
-        IO.foreach(filename) { |line| tree.add Line.new(line) }
+        ARGF.each() { |line| tree.add Line.new(line) }
         # act = RecursiveAction.new proc { |indent,node| puts "    " * indent + node.content }
         out = Proc.new do |indent, node|
             c = node.parents().reverse()[0..-2].map { |n| n.content }
