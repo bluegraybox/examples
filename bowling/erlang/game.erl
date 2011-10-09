@@ -19,6 +19,7 @@ frame(Frame, Score, [10|Rest]) ->
     end;
 
 %% Bad input.
+frame(_Frame, _Score, [First|_Rest]) when (First > 10) -> err;
 frame(_Frame, _Score, [First,Second|_Rest]) when (First + Second > 10) -> err;
 
 %% Spare.
