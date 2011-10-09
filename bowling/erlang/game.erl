@@ -14,7 +14,7 @@ frame(11, Score, _BonusRolls) -> Score;
 frame(Frame, Score, [10|Rest]) ->
     case Rest of
         [] -> Score + 10;
-        [Bonus1] -> Score + 10 + Bonus1;
+        [Bonus1] -> frame(Frame + 1, Score + 10 + Bonus1, Rest);
         [Bonus1, Bonus2|_] -> frame(Frame + 1, Score + 10 + Bonus1 + Bonus2, Rest)
     end;
 
