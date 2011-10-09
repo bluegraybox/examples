@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Copied from jQueryUI modal form dialog example:
+        http://jqueryui.com/demos/dialog/#modal-form
+    -->
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+    <title>Bowling Score Form</title>
+    <link type="text/css" href="jquery-ui/css/ui-lightness/jquery-ui-1.8.16.custom.css" rel="stylesheet" />	
+    <script type="text/javascript" src="jquery-ui/js/jquery-1.6.2.min.js"></script>
+    <script type="text/javascript" src="jquery-ui/js/jquery-ui-1.8.16.custom.min.js"></script>
+
+    <style>
+        body { font-size: 62.5%; }
+        label, input { display:block; }
+        input.text { margin-bottom:12px; width:95%; padding: .4em; }
+        fieldset { padding:0; border:0; margin-top:25px; }
+        h1 { font-size: 1.2em; margin: .6em 0; }
+        div#users-contain { width: 350px; margin: 20px 0; }
+        div#users-contain table { margin: 1em 0; border-collapse: collapse; width: 100%; }
+        div#users-contain table td, div#users-contain table th { border: 1px solid #eee; padding: .6em 10px; text-align: left; }
+        .ui-dialog .ui-state-error { padding: .3em; }
+        .validateTips { border: 1px solid transparent; padding: 0.3em; }
+        .roll { display: inline; padding: 3px 5px; border: 1px solid #999; }
+        .rollIn { display: inline; margin: 3px 5px; }
+        .rollAdd { display: inline; margin: 3px 5px; }
+    </style>
+    <script>
+    $(function() {
+        // a workaround for a flaw in the demo system (http://dev.jqueryui.com/ticket/4375), ignore!
+        $( "#dialog:ui-dialog" ).dialog( "destroy" );
+        
+        var name = $( "#name" ),
+            allFields = $( [] ).add( name ),
+            tips = $( ".validateTips" );
+
+        function updateTips( t ) {
+            tips
+                .text( t )
+                .addClass( "ui-state-highlight" );
+            setTimeout(function() {
+                tips.removeClass( "ui-state-highlight", 1500 );
+            }, 500 );
+        }
+
+        function checkLength( o, n, min, max ) {
+            if ( o.val().length > max || o.val().length < min ) {
+                o.addClass( "ui-state-error" );
+                updateTips( "Length of " + n + " must be between " +
+                    min + " and " + max + "." );
+                return false;
+            } else {
+                return true;
+            }
+        }
+
+        function checkRegexp( o, regexp, n ) {
+            if ( !( regexp.test( o.val() ) ) ) {
+                o.addClass( "ui-state-error" );
+                updateTips( n );
+                return false;
+            } else {
+                return true;
+            }
+        }
+        
+        $( "#dialog-form" ).dialog({
+            autoOpen: false,
+            height: 300,
+            width: 350,
+            modal: true,
+            buttons: {
+                "Add player": function() {
+                    var bValid = true;
+                    allFields.removeClass( "ui-state-error" );
+
+                    bValid = bValid && checkLength( name, "username", 3, 16 );
+                    bValid = bValid && checkRegexp( name, /^[a-z]([0-9a-z_])+$/i, "Name may consist of a-z, 0-9, underscores, begin with a letter." );
+                    if ( bValid ) {
+                        var nameTxt = name.val();
+                        $( "#users tbody" ).append( "<tr>" +
+                            "<td>" + nameTxt + "</td>" + 
+                            "<td class=\"rolls\">" +
+                                '<form><fieldset style="margin-top: 2px;">' +
+                                    '<input type="text" name="roll" id="' + nameTxt + '-roll" class="rollIn" maxlength="2" size="2" class="ui-widget-content ui-corner-all" />' +
+                                    '<button id="' + nameTxt + '-add" class="rollAdd" >Add</button>' +
+                                '</fieldset></form>' +
+                            "</td>" + 
+                            "<td id=\"" + nameTxt + "-score\">0</td>" +
+                        "</tr>" ); 
+                        var roll = '#' + nameTxt + "-roll";
+                        var addRoll = '#' + nameTxt + "-add";
+                        var scoreBox = '#' + nameTxt + "-score";
+                        $( addRoll )
+                            .button()
+                            .click(function() {
+                                var score = $( roll ).val();
+                                $.get('/add/' + nameTxt + '/' + score, function(data) {
+                                    if (data != "error") {
+                                        $( roll ).before( '<div class="roll">' + score + "</div>" );
+                                        $( roll ).val("");
+                                        $( scoreBox ).html(data);
+                                    }
+                                });
+                                return false;
+                            });
+                        $( this ).dialog( "close" );
+                    }
+                },
+                Cancel: function() {
+                    $( this ).dialog( "close" );
+                }
+            },
+            close: function() {
+                allFields.val( "" ).removeClass( "ui-state-error" );
+            }
+        });
+
+        $( "#create-user" )
+            .button()
+            .click(function() {
+                $( "#dialog-form" ).dialog( "open" );
+            });
+    });
+    </script>
+</head>
+<body>
+
+<div class="demo">
+
+<div id="dialog-form" title="Add player">
+    <p class="validateTips">All form fields are required.</p>
+    <form>
+    <fieldset>
+        <label for="name">Name</label>
+        <input type="text" name="name" id="name" class="text ui-widget-content ui-corner-all" />
+    </fieldset>
+    </form>
+</div>
+
+
+<div id="users-contain" class="ui-widget">
+    <h1>Current Players:</h1>
+    <table id="users" class="ui-widget ui-widget-content">
+        <thead>
+            <tr class="ui-widget-header ">
+                <th>Name</th>
+                <th>Rolls</th>
+                <th>Score</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
+<button id="create-user">Add player</button>
+
+</div>
+
+</body>
+</html>
+

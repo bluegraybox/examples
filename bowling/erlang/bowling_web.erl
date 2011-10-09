@@ -27,34 +27,42 @@ init([])->
 get(Req, ["add", Player, RollText])->
     store ! {self(), Player, RollText},
     receive Score ->
-        % Req:ok(io_lib:format("New score for ~p is ~p", [Player, Score]))
         Req:ok(io_lib:format("~p", [Score]))
     end;
 
 get(Req, ["score", Player])->
     store ! {self(), Player},
     receive Score ->
-        % Req:ok(io_lib:format("score for ~p is ~p", [Player, Score]))
         Req:ok(io_lib:format("~p", [Score]))
     end;
 
 get(Req, ["clear", Player])->
     store ! {self(), clear, Player},
     receive Score ->
-        % Req:ok(io_lib:format("score for ~p is ~p", [Player, Score]))
         Req:ok(io_lib:format("~p", [Score]))
     end;
 
-get(Req, _)->
-    Usage = "Usage:
-    /add/Player/Roll to add a roll for a player
-    /score/Player to get total score for a player
-    ",
-    Req:ok(Usage).
+get(Req, [])->
+    store ! {self(), restart},
+    {ok, PageBytes} = file:read_file("form.html"),
+    Page = binary_to_list(PageBytes),
+    receive ok -> Req:ok(Page) end;
+
+get(_Req, Path)->
+    %% Assume these are static pages for the UI.
+    Filename = filename:join(Path),
+    case file:read_file(Filename) of
+        {ok, PageBytes} -> {200, binary_to_list(PageBytes)};
+        {error, Reason} -> {404, Reason}
+    end.
 
 
 loop(Dict) ->
     receive
+        {Pid, restart} ->
+            NewDict = dict:new(),
+            Pid ! ok,
+            loop(NewDict);
         {Pid, clear, Player} ->
             NewDict = dict:store(Player, [], Dict),
             Pid ! 0,
