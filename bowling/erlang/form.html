@@ -16,7 +16,7 @@
         input.text { margin-bottom:12px; width:95%; padding: .4em; }
         fieldset { padding:0; border:0; margin-top:25px; }
         h1 { font-size: 1.2em; margin: .6em 0; }
-        div#users-contain { width: 350px; margin: 20px 0; }
+        div#users-contain { width: 750px; margin: 20px 0; }
         div#users-contain table { margin: 1em 0; border-collapse: collapse; width: 100%; }
         div#users-contain table td, div#users-contain table th { border: 1px solid #eee; padding: .6em 10px; text-align: left; }
         .ui-dialog .ui-state-error { padding: .3em; }
@@ -63,7 +63,36 @@
                 return true;
             }
         }
-        
+
+        function add_player(nameTxt) {
+            $( "#users tbody" ).append( "<tr>" +
+                "<td>" + nameTxt + "</td>" + 
+                "<td class=\"rolls\">" +
+                    '<form><fieldset style="margin-top: 2px;">' +
+                        '<input type="text" name="roll" id="' + nameTxt + '-roll" class="rollIn" maxlength="2" size="2" class="ui-widget-content ui-corner-all" />' +
+                        '<button id="' + nameTxt + '-add" class="rollAdd" >Add</button>' +
+                    '</fieldset></form>' +
+                "</td>" + 
+                "<td id=\"" + nameTxt + "-score\">0</td>" +
+            "</tr>" ); 
+            var rollInput = '#' + nameTxt + "-roll";
+            var addRoll = '#' + nameTxt + "-add";
+            var scoreBox = '#' + nameTxt + "-score";
+            $( addRoll )
+                .button()
+                .click(function() {
+                    var roll = $( rollInput ).val();
+                    $.get('/add/' + nameTxt + '/' + roll, function(data) {
+                        if (data != "error") {
+                            $( rollInput ).before( '<div class="roll">' + roll + "</div>" );
+                            $( rollInput ).val("");
+                            $( scoreBox ).html(data);
+                        }
+                    });
+                    return false;
+                });
+        }
+
         $( "#dialog-form" ).dialog({
             autoOpen: false,
             height: 300,
@@ -75,35 +104,10 @@
                     allFields.removeClass( "ui-state-error" );
 
                     bValid = bValid && checkLength( name, "username", 3, 16 );
-                    bValid = bValid && checkRegexp( name, /^[a-z]([0-9a-z_])+$/i, "Name may consist of a-z, 0-9, underscores, begin with a letter." );
+                    bValid = bValid && checkRegexp( name, /^[a-z]([0-9a-z_])+$/i, "Name may consist of a-z, 0-9, underscores, and must begin with a letter." );
                     if ( bValid ) {
                         var nameTxt = name.val();
-                        $( "#users tbody" ).append( "<tr>" +
-                            "<td>" + nameTxt + "</td>" + 
-                            "<td class=\"rolls\">" +
-                                '<form><fieldset style="margin-top: 2px;">' +
-                                    '<input type="text" name="roll" id="' + nameTxt + '-roll" class="rollIn" maxlength="2" size="2" class="ui-widget-content ui-corner-all" />' +
-                                    '<button id="' + nameTxt + '-add" class="rollAdd" >Add</button>' +
-                                '</fieldset></form>' +
-                            "</td>" + 
-                            "<td id=\"" + nameTxt + "-score\">0</td>" +
-                        "</tr>" ); 
-                        var roll = '#' + nameTxt + "-roll";
-                        var addRoll = '#' + nameTxt + "-add";
-                        var scoreBox = '#' + nameTxt + "-score";
-                        $( addRoll )
-                            .button()
-                            .click(function() {
-                                var score = $( roll ).val();
-                                $.get('/add/' + nameTxt + '/' + score, function(data) {
-                                    if (data != "error") {
-                                        $( roll ).before( '<div class="roll">' + score + "</div>" );
-                                        $( roll ).val("");
-                                        $( scoreBox ).html(data);
-                                    }
-                                });
-                                return false;
-                            });
+                        add_player(nameTxt);
                         $( this ).dialog( "close" );
                     }
                 },
@@ -121,6 +125,25 @@
             .click(function() {
                 $( "#dialog-form" ).dialog( "open" );
             });
+
+        $.get('/all', function(dataString) {
+            if (dataString != "error") {
+                var data = $.parseJSON(dataString);
+                for (p = 0; p < data.length; p++) {
+                    player = data[p];
+                    add_player(player.name);
+                    var rolls = player.rolls;
+                    // Since we're pre-pending to the input
+                    for (var i = rolls.length - 1; i >= 0; i--) {
+                        var rollInput = '#' + player.name + "-roll";
+                        var roll = rolls[i];
+                        $( rollInput ).before( '<div class="roll">' + roll + "</div>" );
+                    }
+                    var scoreBox = '#' + player.name + "-score";
+                    $( scoreBox ).html(player.score);
+                }
+            }
+        });
     });
     </script>
 </head>
@@ -130,7 +153,7 @@
 
 <div id="dialog-form" title="Add player">
     <p class="validateTips">All form fields are required.</p>
-    <form>
+    <form onsubmit="return false;">
     <fieldset>
         <label for="name">Name</label>
         <input type="text" name="name" id="name" class="text ui-widget-content ui-corner-all" />

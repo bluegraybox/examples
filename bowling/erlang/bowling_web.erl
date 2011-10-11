@@ -42,11 +42,18 @@ get(Req, ["clear", Player])->
         Req:ok(io_lib:format("~p", [Score]))
     end;
 
+get(Req, ["all"])->
+    store ! {self(), all},
+    receive Dict ->
+        Json = to_json(dict:to_list(Dict), []),
+        % io:format("Json: ~s~n", [Json]),
+        Req:ok(Json)
+    end;
+
 get(Req, [])->
-    store ! {self(), restart},
     {ok, PageBytes} = file:read_file("form.html"),
     Page = binary_to_list(PageBytes),
-    receive ok -> Req:ok(Page) end;
+    Req:ok(Page);
 
 get(_Req, Path)->
     %% Assume these are static pages for the UI.
@@ -56,13 +63,19 @@ get(_Req, Path)->
         {error, Reason} -> {404, Reason}
     end.
 
+to_json([{Name, Rolls} | Rest], Scores) ->
+    Score = game:score(lists:reverse(Rolls)),
+    Json = io_lib:format("{\"name\": \"~s\", \"rolls\": ~w, \"score\": ~w}", [Name, Rolls, Score]),
+    to_json(Rest, [Json | Scores]);
+
+to_json([], Scores) -> "[" ++ string:join(lists:reverse(Scores), ",") ++ "]".
+
 
 loop(Dict) ->
     receive
-        {Pid, restart} ->
-            NewDict = dict:new(),
-            Pid ! ok,
-            loop(NewDict);
+        {Pid, all} ->
+            Pid ! Dict,
+            loop(Dict);
         {Pid, clear, Player} ->
             NewDict = dict:store(Player, [], Dict),
             Pid ! 0,
