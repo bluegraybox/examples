@@ -64,7 +64,7 @@ get(_Req, Path)->
     end.
 
 to_json([{Name, Rolls} | Rest], Scores) ->
-    Score = game:score(lists:reverse(Rolls)),
+    Score = game:score(Rolls),
     Json = io_lib:format("{\"name\": \"~s\", \"rolls\": ~w, \"score\": ~w}", [Name, Rolls, Score]),
     to_json(Rest, [Json | Scores]);
 
@@ -77,30 +77,27 @@ loop(Dict) ->
             Pid ! Dict,
             loop(Dict);
         {Pid, clear, Player} ->
-            NewDict = dict:store(Player, [], Dict),
+            NewDict = dict:erase(Player, Dict),
             Pid ! 0,
             loop(NewDict);
         {Pid, Player, RollText} ->
-            Rolls = get_rolls(Player, Dict),
             {Roll, _} = string:to_integer(RollText),
-            NewRolls = [Roll | Rolls],
-            case game:score(lists:reverse(NewRolls)) of
-                err -> NewDict = Dict,
-                    Pid ! error;
-                Score -> NewDict = dict:store(Player, NewRolls, Dict),
-                    Pid ! Score
-            end,
-            loop(NewDict);
+            NewDict = dict:append(Player, Roll, Dict),
+            Rolls = dict:fetch(Player, NewDict),
+            case game:score(Rolls) of
+                err ->
+                    Pid ! error,
+                    loop(Dict);
+                Score ->
+                    Pid ! Score,
+                    loop(NewDict)
+            end;
         {Pid, Player} ->
-            Rolls = get_rolls(Player, Dict),
-            Score = game:score(lists:reverse(Rolls)),
+            Score = case dict:find(Player, Dict) of
+                {ok, Rolls} -> game:score(Rolls);
+                error -> 0
+            end,
             Pid ! Score,
             loop(Dict)
-    end.
-
-get_rolls(Player, Dict) ->
-    case dict:find(Player, Dict) of
-        {ok, Rolls} -> Rolls;
-        error -> []
     end.
 

@@ -133,8 +133,7 @@
                     player = data[p];
                     add_player(player.name);
                     var rolls = player.rolls;
-                    // Since we're pre-pending to the input
-                    for (var i = rolls.length - 1; i >= 0; i--) {
+                    for (var i = 0; i < rolls.length; i++) {
                         var rollInput = '#' + player.name + "-roll";
                         var roll = rolls[i];
                         $( rollInput ).before( '<div class="roll">' + roll + "</div>" );
