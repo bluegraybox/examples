@@ -36,10 +36,10 @@ get(Req, ["score", Player])->
         Req:ok(io_lib:format("~p", [Score]))
     end;
 
-get(Req, ["clear", Player])->
-    store ! {self(), clear, Player},
-    receive Score ->
-        Req:ok(io_lib:format("~p", [Score]))
+get(Req, ["newgame"])->
+    store ! {self(), newgame},
+    receive ok ->
+        Req:ok("")
     end;
 
 get(Req, ["all"])->
@@ -76,10 +76,9 @@ loop(Dict) ->
         {Pid, all} ->
             Pid ! Dict,
             loop(Dict);
-        {Pid, clear, Player} ->
-            NewDict = dict:erase(Player, Dict),
-            Pid ! 0,
-            loop(NewDict);
+        {Pid, newgame} ->
+            Pid ! ok,
+            loop(dict:new());
         {Pid, Player, RollText} ->
             {Roll, _} = string:to_integer(RollText),
             NewDict = dict:append(Player, Roll, Dict),

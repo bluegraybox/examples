@@ -11,18 +11,27 @@
 
 main(_) ->
     inets:start(),
-    get_url("http://localhost:8000/clear/Joe"),
+    get_url("http://localhost:8000/newgame"),
     Tests = [
         {"Joe", 4, "4"},
-        {"Joe", 9, "error"},
+        {"Joe", 9, "error"}, % bad input
         {"Joe", 5, "9"},
         {"Joe", 6, "15"},
         {"Joe", 4, "19"},
-        {"Joe", 3, "25"},
+        {"Joe", 3, "25"}, % spare
         {"Joe", 2, "27"},
         {"Joe", 10, "37"},
-        {"Joe", 2, "41"},
-        {"Joe", 6, "53"}],
+        {"Joe", 2, "41"}, % strike
+        {"Joe", 6, "53"}, % strike
+        %% interleaving players
+        {"Fred", 3, "3"},
+        {"Dave", 2, "2"},
+        {"Fred", 4, "7"},
+        {"Dave", 6, "8"},
+        {"Fred", 1, "8"},
+        {"Dave", 7, "15"},
+        {"Fred", 2, "10"},
+        {"Dave", 3, "18"}],
     test(Tests).
 
 test(Tests) -> test(Tests, 0, 0).
