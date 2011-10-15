@@ -24,6 +24,7 @@
         .roll { display: inline; padding: 3px 5px; border: 1px solid #999; }
         .rollIn { display: inline; margin: 3px 5px; }
         .rollAdd { display: inline; margin: 3px 5px; }
+        #new-game { float: right; }
     </style>
     <script>
     $(function() {
@@ -126,6 +127,14 @@
                 $( "#dialog-form" ).dialog( "open" );
             });
 
+        $( "#new-game" )
+            .button()
+            .click(function() {
+                $.get('/newgame', function(dataString) {
+                    $( "#users tbody tr" ).detach();
+                });
+            });
+
         $.get('/all', function(dataString) {
             if (dataString != "error") {
                 var data = $.parseJSON(dataString);
@@ -174,8 +183,9 @@
         <tbody>
         </tbody>
     </table>
+    <button id="create-user">Add player</button>
+    <button id="new-game">New Game</button>
 </div>
-<button id="create-user">Add player</button>
 
 </div>
 
