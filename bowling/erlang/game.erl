@@ -42,7 +42,7 @@ spare_bonus([First|_Rest]) when (First > 10) -> err;
 spare_bonus([First|_Rest]) -> First.
 
 strike_bonus([]) -> 0;
-strike_bonus([10]) -> 10;
+strike_bonus([Only]) -> Only;
 strike_bonus([10,Second|_Rest]) when (Second > 10) -> err;
 strike_bonus([10,Second|_Rest]) -> 10 + Second;
 strike_bonus([First,Second|_Rest]) when (First + Second > 10) -> err;
