@@ -11,6 +11,10 @@ class FrameTest(unittest.TestCase):
         frame = Frame()
         self.assertRaises(Exception, frame.add_ball, 11)
 
+    def test_invalid_pins_neg(self):
+        frame = Frame()
+        self.assertRaises(Exception, frame.add_ball, -1)
+
     def test_is_full_False_AfterOneBall(self):
         frame = Frame()
         frame.add_ball(7)
@@ -61,8 +65,9 @@ class FrameTest(unittest.TestCase):
         frame = self.get_strike_frame()
         self.assertTrue(frame.is_pin_count_ok(7))
         frame.add_ball(7)
-        self.assertTrue(frame.is_pin_count_ok(10))
-        frame.add_ball(10)
+        self.assertFalse(frame.is_pin_count_ok(10))
+        self.assertTrue(frame.is_pin_count_ok(3))
+        frame.add_ball(3)
         self.assertFalse(frame.is_pin_count_ok(1))
         
     def test_pin_count_spare(self):
@@ -140,37 +145,56 @@ class GameTest(unittest.TestCase):
         self.assertEquals(game.score(), 10)
         self.assertEquals(game.current_frame(), 2)
     
-    def test_game_full(self):
-        expectedScore = 20
-        balls = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    def check_full_game(self, expectedScore, balls):
         game = Game()
         for ball in balls:
             game.add_ball(ball)
         self.assertEquals(expectedScore, game.score())
+    
+    def score_full_game(self, balls):
+        game = Game()
+        for ball in balls:
+            game.add_ball(ball)
+        return game.score()
+    
+    def test_game_full(self):
+        self.check_full_game(20, [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1])
         
     def test_game_full2(self):
-        expectedScore = 47
-        balls = [1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 10, 10 ,9]
-        game = Game()
-        for ball in balls:
-            game.add_ball(ball)
-        self.assertEquals(expectedScore, game.score())
+        self.check_full_game(47, [1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 10, 10 ,9])
         
     def test_game_full3(self):
-        expectedScore = 300
-        balls = [10,10,10,10,10,10,10,10,10,10,10,10]
-        game = Game()
-        for ball in balls:
-            game.add_ball(ball)
-        self.assertEquals(expectedScore, game.score())
+        self.check_full_game(300, [10,10,10,10,10,10,10,10,10,10,10,10])
         
     def test_game_full4(self):
-        expectedScore = 173
-        balls = [7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 10]
-        game = Game()
-        for ball in balls:
-            game.add_ball(ball)
-        self.assertEquals(expectedScore, game.score())
+        self.check_full_game(173, [7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 10])
+
+    def test_game_full_suite(self):
+        self.check_full_game(0,   [0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0])
+        self.check_full_game(20,  [1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1])
+        self.check_full_game(6,   [1,1, 1,1, 1,1])  # incomplete
+        self.check_full_game(18,  [1,1, 6,4, 3])  # incomplete w/ spare
+        self.check_full_game(150, [5,5, 5,5, 5,5, 5,5, 5,5, 5,5, 5,5, 5,5, 5,5, 5,5, 5])
+        self.check_full_game(47,  [1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 10, 10 ,9])
+        self.check_full_game(173, [7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 7,3, 10])
+        self.check_full_game(300, [10,  10,  10,  10,  10,  10,  10,  10,  10,  10,  10,  10])
+        self.check_full_game(280, [10,  10,  10,  10,  10,  10,  10,  10,  10,  10,  5])  # incomplete
+        self.check_full_game(300, [10,  10,  10,  10,  10,  10,  10,  10,  10,  10,  10,  10, 10, 10, 10])  # extras
+        self.check_full_game(240, [10,  10,  10,  0,0, 10,  10,  10,  10,  10,  10,  10,  10])
+        self.check_full_game(245, [10,  10,  10,  10,  10,  10,  10,  10,  10,  1,1])
+
+    def test_game_full_error_1(self):
+        self.assertRaises(Exception, self.score_full_game, [1,1, 12,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1])  # invalid roll
+    def test_game_full_error_2(self):
+        self.assertRaises(Exception, self.score_full_game, [1,1, 6,-1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1])  # invalid roll
+    def test_game_full_error_3(self):
+        self.assertRaises(Exception, self.score_full_game, [10,  10,  10,  10,  10,  10,  10,  10,  10,  10,  9,2])  # invalid extras
+    def test_game_full_error_4(self):
+        self.assertRaises(Exception, self.score_full_game, [10,  10,  10,  10,  10,  10,  10,  10,  10,  10,  10,  11])  # invalid extras
+    def test_game_full_error_5(self):
+        self.assertRaises(Exception, self.score_full_game, [10,  10,  10,  10,  10,  10,  10,  10,  10,  9,1, 11])  # invalid extras
+    def test_game_full_error_6(self):
+        self.assertRaises(Exception, self.score_full_game, [10,  10,  5,6, 10,  10,  10,  10,  10,  10,  1,1])
 
 if __name__ == "__main__":
     unittest.main()
