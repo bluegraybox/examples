@@ -3,6 +3,8 @@
 -export([init/1, get/2, loop/1]).
 -import(game).
 
+-define(DATA_FILE, "bowling_web.data").
+
 %%% A REST web service for tracking bowling scores.
 
 %% Uses the Spooky web framework; check it out from GitHub, build it, then:
@@ -15,7 +17,14 @@ init([])->
     %% register a process that holds our dict in memory
     case whereis(store) of
         undefined ->
-            Pid = spawn(?MODULE, loop, [dict:new()]),
+            Dict = case load(?DATA_FILE) of
+                no_file -> dict:new();
+                error -> dict:new();
+                Data ->
+                    io:format("Game loaded from ~s~n", [?DATA_FILE]),
+                    Data
+            end,
+            Pid = spawn(?MODULE, loop, [Dict]),
             register(store, Pid),
             io:format("store Pid=[~p]~n", [Pid]);
         Pid ->
@@ -73,6 +82,8 @@ to_json([], Scores) -> "[" ++ string:join(lists:reverse(Scores), ",") ++ "]".
 
 loop(Dict) ->
     receive
+        {Pid, stop} ->
+            Pid !  save(?DATA_FILE, Dict);
         {Pid, all} ->
             Pid ! Dict,
             loop(Dict);
@@ -98,5 +109,39 @@ loop(Dict) ->
             end,
             Pid ! Score,
             loop(Dict)
+    end.
+
+load(Filename) ->
+    case filelib:is_file(Filename) of
+        true ->
+            case file:open(Filename, [read]) of
+                {ok, Handle} ->
+                    Response = case io:read(Handle, "") of
+                        {ok, Dict} -> Dict;
+                        eof -> dict:new();
+                        {error, Info} ->
+                            io:format("Error: ~p~n", [Info]),
+                            error
+                    end,
+                    file:close(Handle),
+                    Response;
+                {error, Reason} ->
+                    io:format("Error opening file ~s: ~s~n", [Filename, Reason]),
+                    error
+            end;
+        false -> io:format("No data file to load~n"), no_file
+    end.
+
+save(Filename, Dict) ->
+    case file:open(Filename, [write]) of
+        {ok, Handle} ->
+            io:write(Handle, Dict),
+            io:fwrite(Handle, ".", []),  % need to end the statement; write() converts period to 46, its ascii value.
+            file:close(Handle),
+            io:format("Game saved to ~s~n", [Filename]),
+            ok;
+        {error, Reason} ->
+            io:format("Error opening file ~s: ~s~n", [Filename, Reason]),
+            error
     end.
 
