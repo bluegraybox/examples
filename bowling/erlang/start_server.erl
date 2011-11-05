@@ -20,7 +20,9 @@ main([SpookyDir]) ->
 
     case io:get_line("Return to exit...") of
         {error, Info} -> io:format("Error: ~p~n", [Info]);
-        _Value -> store ! {self(), stop}
+        _Value -> store ! {self(), stop},
+        %% wait for the store to shut down before exiting
+        receive _Response -> ok end
     end,
     spooky:stop().
 

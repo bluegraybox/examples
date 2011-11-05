@@ -7,11 +7,9 @@
 
 %%% A REST web service for tracking bowling scores.
 
-%% Uses the Spooky web framework; check it out from GitHub, build it, then:
-%%     erlc -pa $SPOOKY_HOME/ebin/ bowling_web.erl game.erl && erl -pa $SPOOKY_HOME/ebin/ -pa $SPOOKY_HOME/deps/*/ebin
-%% to compile this code and start up the Erlang shell. Once there, run:
-%%     spooky:start_link(bowling_web).
-%% to start the server on http://localhost:8000/.
+%% Uses the Spooky web framework; check it out from GitHub, build it, then run
+%%     start_server.erl <Spooky dir>
+%% to compile this code and start the Spooky server on http://localhost:8000/.
 
 init([])->
     %% register a process that holds our dict in memory
@@ -135,8 +133,7 @@ load(Filename) ->
 save(Filename, Dict) ->
     case file:open(Filename, [write]) of
         {ok, Handle} ->
-            io:write(Handle, Dict),
-            io:fwrite(Handle, ".", []),  % need to end the statement; write() converts period to 46, its ascii value.
+            io:fwrite(Handle, "~w.", [Dict]),  % period to end the statement
             file:close(Handle),
             io:format("Game saved to ~s~n", [Filename]),
             ok;
