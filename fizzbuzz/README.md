@@ -1,8 +1,9 @@
-! Fizzbuzz
+# Fizzbuzz
 
 Fizzbuzz is about the simplest programming challenge imaginable, but [it's been observed](http://imranontech.com/2007/01/24/using-fizzbuzz-to-find-developers-who-grok-coding/) that a surprising number of seemingly experienced programmers choke when told to actually sit down and code it. Of course, telling any programmer this [pretty much compels us](http://www.codinghorror.com/blog/2007/02/fizzbuzz-the-programmers-stairway-to-heaven.html) to sit down and code it just to prove (to ourselves at least) that we can. Since I've been tinkering in Erlang, I figured I'd try that. The interesting thing is that even for something this simple, you have to do it differently in Erlang. In fact, it's instructive to see _how_ differently you can do it in Erlang.
 
 So for reference, here's the Python version:
+
 ```python
 #!/usr/bin/python
 
