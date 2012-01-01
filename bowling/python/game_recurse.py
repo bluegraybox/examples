@@ -7,19 +7,13 @@ def score(rolls, frame=1, total=0):
         return total
     elif rolls[0] == 10:
         rolls = rolls[1:]
-        if rolls:
-            bonus = sum(rolls[0:2])
-        else:
-            bonus = 0
+        bonus = sum(rolls[0:2]) if rolls else 0
         return score(rolls, frame + 1, total + 10 + bonus)
     elif len(rolls) == 1:
         return total + rolls[0]
     elif sum(rolls[0:2]) == 10:
         rolls = rolls[2:]
-        if rolls:
-            bonus = rolls[0]
-        else:
-            bonus = 0
+        bonus = rolls[0] if rolls else 0
         return score(rolls, frame + 1, total + 10 + bonus)
     else:
         total += sum(rolls[0:2])
