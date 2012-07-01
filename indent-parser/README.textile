@@ -13,11 +13,11 @@ and you think with a bit of effort you could actually parse this and do somethin
 
 So you've got input that looks something like:
 
-!input.png!
+!https://github.com/bluegraybox/examples/raw/master/indent-parser/input.png!
 
 and you want to turn it into a data structure like this:
 
-!structure.png!
+!https://github.com/bluegraybox/examples/raw/master/indent-parser/structure.png!
 
 I implemented this in Ruby originally, then decided it might be a good project for trying out Lisp with.
 Originally, I just transliterated my Ruby logic into Lisp.
