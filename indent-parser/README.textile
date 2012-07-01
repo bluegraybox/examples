@@ -1,27 +1,25 @@
-<html>
-<head>
-</head>
-<body>
-<h1>Indent Parser</h1>
-<h2>Overview</h2>
-<p>This project is about parsing indented text into a tree data structure, based on the level of indenting.
+h1. Indent Parser
 
-</p><p>Well, no, really it's about me playing around with Lisp.
+h2. Overview
 
-</p><p>This code isn't anything you'd use straight out of the box, but this is a fairly common problem:
+This project is about parsing indented text into a tree data structure, based on the level of indenting.
+
+Well, no, really it's about me playing around with Lisp.
+
+This code isn't anything you'd use straight out of the box, but this is a fairly common problem:
 You've got some sort of ad-hoc markup you're using in a text file -
 some sort of formatting you've been following just for readability -
 and you think with a bit of effort you could actually parse this and do something useful with it.
 
-</p><p>So you've got input that looks something like:
+So you've got input that looks something like:
 
-</p><p><img src="input.png" />
+!input.png!
 
-</p><p>and you want to turn it into a data structure like this:
+and you want to turn it into a data structure like this:
 
-</p><p><img src="structure.png" />
+!structure.png!
 
-</p><p>I implemented this in Ruby originally, then decided it might be a good project for trying out Lisp with.
+I implemented this in Ruby originally, then decided it might be a good project for trying out Lisp with.
 Originally, I just transliterated my Ruby logic into Lisp.
 It didn't really work, and the code just felt wrong.
 So I took a stab at doing it in a "Lispier" way.
@@ -30,7 +28,3 @@ which was the real point of the exercise.
 The point isn't whether the end result is more compact, elegant, readable or whatever;
 the point is that it's a different way of looking at the problem.
 It's stretching exercises for my brain.
-</p>
-</body>
-</html>
-
