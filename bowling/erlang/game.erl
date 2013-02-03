@@ -41,5 +41,4 @@ spare_bonus([First|_Rest]) -> First.
 
 strike_bonus([]) -> 0;
 strike_bonus([Only]) -> Only;
-strike_bonus([10,Second|_Rest]) -> 10 + Second;
 strike_bonus([First,Second|_Rest]) -> First + Second.
