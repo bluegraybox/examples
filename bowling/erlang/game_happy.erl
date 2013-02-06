@@ -3,22 +3,22 @@
 -module(game_happy).
 -export([score/1]).
 
-score(Rolls) -> frame(1, 0, Rolls).
+score(Rolls) -> frame(Rolls, 1, 0).
 
 % Game complete.
-frame(11, Score, _BonusRolls) -> Score;
+frame(_BonusRolls, 11, Score) -> Score;
 
 %% Strike.
-frame(Frame, Score, [10|Rest]) ->
-    frame(Frame + 1, Score + 10 + strike_bonus(Rest), Rest);
+frame([10|Rest], Frame, Score) ->
+    frame(Rest, Frame + 1, Score + 10 + strike_bonus(Rest));
 
 %% Spare.
-frame(Frame, Score, [First,Second|Rest]) when (First + Second == 10) ->
-    frame(Frame + 1, Score + 10 + spare_bonus(Rest), Rest);
+frame([First,Second|Rest], Frame, Score) when (First + Second == 10) ->
+    frame(Rest, Frame + 1, Score + 10 + spare_bonus(Rest));
 
 %% Normal.
-frame(Frame, Score, [First,Second|Rest]) ->
-    frame(Frame + 1, Score + First + Second, Rest).
+frame([First,Second|Rest], Frame, Score) ->
+    frame(Rest, Frame + 1, Score + First + Second).
 
 %% spare & strike bonus calculations.
 spare_bonus([First|_Rest]) -> First.
