@@ -1,5 +1,7 @@
 #!/usr/local/bin/escript
+%%! -smp enable -sname bowling_web
 
+-mode(compile).  % for better performance
 
 main([]) ->
     io:format("Usage: ~s <spooky install dir>~n", [escript:script_name()]);

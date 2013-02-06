@@ -3,10 +3,11 @@
 %%! -smp enable
 
 -module(game_test).
-%% Needs to be compiled so we can specify our output functions.
--mode(compile).
+
+-mode(compile).  % for better performance
 
 -import(game).
+
 
 main([]) ->
     test([

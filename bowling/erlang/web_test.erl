@@ -2,27 +2,24 @@
 %% -*- erlang -*-
 %%! -smp enable
 
--module(web_test).
-%% Needs to be compiled so we can specify our output functions.
--mode(compile).
+-mode(compile).  % for better performance
 
-%% Need to export our output functions so we can invoke them.
--export([main/1]).
 
 main(_) ->
     inets:start(),
     get_url("http://localhost:8000/newgame"),
     Tests = [
         {"Joe", 4, "4"},
-        {"Joe", 9, "error"}, % bad input
-        {"Joe", 5, "9"},
-        {"Joe", 6, "15"},
-        {"Joe", 4, "19"},
-        {"Joe", 3, "25"}, % spare
-        {"Joe", 2, "27"},
-        {"Joe", 10, "37"},
-        {"Joe", 2, "41"}, % strike
-        {"Joe", 6, "53"}, % strike
+        {"Joe", 9, "{invalid_total,13}"}, % bad input
+        {"John", 4, "4"},
+        {"John", 5, "9"},
+        {"John", 6, "15"},
+        {"John", 4, "19"},
+        {"John", 3, "25"}, % spare
+        {"John", 2, "27"},
+        {"John", 10, "37"},
+        {"John", 2, "41"}, % strike
+        {"John", 6, "53"}, % strike
         %% interleaving players
         {"Fred", 3, "3"},
         {"Dave", 2, "2"},
