@@ -1,6 +1,6 @@
-#!/usr/local/bin/escript
+#!/usr/bin/escript
 %% -*- erlang -*-
-%%! -smp enable +P 123456789  % increase process limit
+%%! -smp enable +P 1200300  % increase process limit
 
 -module(ring).
 
@@ -25,13 +25,16 @@ main(Limit) ->
     Words = Bytes div erlang:system_info(wordsize),
     io:format("One process uses ~p bytes (~p words of ~p bytes each)~n", [Bytes, Words, erlang:system_info(wordsize)]),
     ProcMemInit = proplists:get_value(processes_used, erlang:memory()),
+
     io:format("Spawning ~p processes~n", [Limit]),
     {StartMicro, {ok, FirstPid, LastPid}} = timer:tc(ring, create, [Limit]),
     io:format("Started ~p processes in ~p seconds~n", [Limit, StartMicro/1000000]),
     ProcMemStarted = proplists:get_value(processes_used, erlang:memory()),
-    io:format("Memory usage: ~p~n", [ProcMemStarted - ProcMemInit]),
+    io:format("Memory usage: ~p bytes~n", [ProcMemStarted - ProcMemInit]),
+
     {StopMicro, ok} = timer:tc(ring, stop, [FirstPid, LastPid]),
     io:format("Stopped ~p processes in ~p seconds~n", [Limit, StopMicro/1000000]).
+
 
 create(N) ->
     FirstPid = spawn(ring, start_process, [N, self()]),
@@ -40,6 +43,7 @@ create(N) ->
         {started, LastPid} ->
             {ok, FirstPid, LastPid}
     end.
+
 
 start_process(0, ManagerPid) ->  % last process
     dbg("0!~n", []),
@@ -59,6 +63,7 @@ start_process(Count, ManagerPid) ->
         {stop, Pid} -> NextPid ! {stop, Pid}
     end.
 
+
 stop(FirstPid, LastPid) ->
     FirstPid ! {stop, self()},
     % wait for a stop message from the last process
@@ -66,9 +71,9 @@ stop(FirstPid, LastPid) ->
         {stop, LastPid} -> ok
     end.
 
+
 dbg(Msg, Opts) ->
     case os:getenv("verbose") of
         false -> ok;
         _ -> io:format(Msg, Opts)
     end.
-
