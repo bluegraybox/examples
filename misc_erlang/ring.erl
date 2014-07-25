@@ -11,6 +11,11 @@
 
 -export([create/1, stop/2, start_process/2]).
 
+-define(DBG(Msg, Opts), case os:getenv("verbose") of
+    false -> ok;
+    _ -> io:format(Msg, Opts)
+end).
+
 main([]) ->
     io:format("Usage: ./ring <number of processes>~n"),
     io:format("to get debugging info:~n"),
@@ -29,6 +34,7 @@ main(Limit) ->
     io:format("Spawning ~p processes~n", [Limit]),
     {StartMicro, {ok, FirstPid, LastPid}} = timer:tc(ring, create, [Limit]),
     io:format("Started ~p processes in ~p seconds~n", [Limit, StartMicro/1000000]),
+
     ProcMemStarted = proplists:get_value(processes_used, erlang:memory()),
     io:format("Memory usage: ~p bytes~n", [ProcMemStarted - ProcMemInit]),
 
@@ -46,7 +52,7 @@ create(N) ->
 
 
 start_process(0, ManagerPid) ->  % last process
-    dbg("0!~n", []),
+    ?DBG("0!~n", []),
     %% Tell the manager we've started
     ManagerPid ! {started, self()},
     %% Wait for a stop message
@@ -55,7 +61,7 @@ start_process(0, ManagerPid) ->  % last process
             Pid ! {stop, self()}
     end;
 start_process(Count, ManagerPid) ->
-    dbg("~p.", [Count]),
+    ?DBG("~p.", [Count]),
     NextPid = spawn(ring, start_process, [Count-1, ManagerPid]),
     %% Wait for a stop message
     receive
@@ -69,11 +75,4 @@ stop(FirstPid, LastPid) ->
     % wait for a stop message from the last process
     receive
         {stop, LastPid} -> ok
-    end.
-
-
-dbg(Msg, Opts) ->
-    case os:getenv("verbose") of
-        false -> ok;
-        _ -> io:format(Msg, Opts)
     end.
