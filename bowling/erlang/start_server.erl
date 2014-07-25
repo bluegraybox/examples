@@ -1,4 +1,4 @@
-#!/usr/local/bin/escript
+#!/usr/bin/escript
 %%! -smp enable -sname bowling_web
 
 -mode(compile).  % for better performance
