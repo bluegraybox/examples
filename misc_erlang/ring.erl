@@ -1,4 +1,4 @@
-#!/usr/bin/escript
+%% #!/usr/bin/escript
 %% -*- erlang -*-
 %%! -smp enable +P 1200300  % increase process limit
 
@@ -9,66 +9,86 @@
 
 -mode(compile).
 
--export([create/1, stop/2, start_process/2]).
+-export([start/1, start/2, start_quiet/2, stop/2, main/0, main/1, dump/0, ignore/0]).
 
--define(DBG(Msg, Opts), case os:getenv("verbose") of
-    false -> ok;
-    _ -> io:format(Msg, Opts)
-end).
+
+main() -> main([]).
 
 main([]) ->
     io:format("Usage: ./ring <number of processes>~n"),
-    io:format("to get debugging info:~n"),
-    io:format("    env verbose=y ./ring <N>~n"),
-    io:format("(not recommended for more than 100 processes)~n");
+    halt(1);
 main([Limit]) ->
-    {LimitInt, _Rest} = string:to_integer(Limit),
-    main(LimitInt);
-main(Limit) ->
+    case string:to_integer(Limit) of
+        {error, Message} -> io:format("Bad parameter '~s': ~s~n", [Limit, Message]);
+        {LimitInt, _Rest} -> go(LimitInt)
+    end,
+    halt().
+
+go(Limit) ->
+    Debugger = if Limit < 1000 -> dump; true -> ignore end,
+    register(debugger, spawn(?MODULE, Debugger, [])),
+    debugger ! "Test Message~n",
     Fun = fun() -> receive after infinity -> ok end end,
     {_,Bytes} = process_info(spawn(Fun), memory),
     Words = Bytes div erlang:system_info(wordsize),
-    io:format("One process uses ~p bytes (~p words of ~p bytes each)~n", [Bytes, Words, erlang:system_info(wordsize)]),
+    debugger ! {"One process uses ~p bytes (~p words of ~p bytes each)~n", [Bytes, Words, erlang:system_info(wordsize)]},
     ProcMemInit = proplists:get_value(processes_used, erlang:memory()),
 
-    io:format("Spawning ~p processes~n", [Limit]),
-    {StartMicro, {ok, FirstPid, LastPid}} = timer:tc(ring, create, [Limit]),
-    io:format("Started ~p processes in ~p seconds~n", [Limit, StartMicro/1000000]),
+    debugger ! {"Spawning ~p processes~n", [Limit]},
+    {StartMicro, {ok, FirstPid, LastPid}} = timer:tc(?MODULE, start, [Limit]),
+    debugger ! {"Started ~p processes in ~p seconds~n", [Limit, StartMicro/1000000]},
 
     ProcMemStarted = proplists:get_value(processes_used, erlang:memory()),
-    io:format("Memory usage: ~p bytes~n", [ProcMemStarted - ProcMemInit]),
+    debugger ! {"Memory usage: ~p bytes~n", [ProcMemStarted - ProcMemInit]},
 
-    {StopMicro, ok} = timer:tc(ring, stop, [FirstPid, LastPid]),
-    io:format("Stopped ~p processes in ~p seconds~n", [Limit, StopMicro/1000000]).
+    {StopMicro, ok} = timer:tc(?MODULE, stop, [FirstPid, LastPid]),
+    debugger ! {"Stopped ~p processes in ~p seconds~n", [Limit, StopMicro/1000000]},
+
+    debugger ! {done, self()},
+    receive done -> ok end.
 
 
-create(N) ->
-    FirstPid = spawn(ring, start_process, [N, self()]),
+start(N) ->
+    Start = if N < 1000 -> start; true -> start_quiet end,
+    FirstPid = spawn(?MODULE, Start, [N, self()]),
     % wait for a 'started' message from the last process
     receive
         {started, LastPid} ->
             {ok, FirstPid, LastPid}
     end.
 
-
-start_process(0, ManagerPid) ->  % last process
-    ?DBG("0!~n", []),
+start(0, ManagerPid) ->  % last process
+    debugger ! {count, 0},
     %% Tell the manager we've started
     ManagerPid ! {started, self()},
-    %% Wait for a stop message
-    receive
-        {stop, Pid} ->
-            Pid ! {stop, self()}
-    end;
-start_process(Count, ManagerPid) ->
-    ?DBG("~p.", [Count]),
-    NextPid = spawn(ring, start_process, [Count-1, ManagerPid]),
+    wait_last();
+start(Count, ManagerPid) ->
+    debugger ! {count, Count},
+    NextPid = spawn(?MODULE, start, [Count-1, ManagerPid]),
+    wait(NextPid).
+
+
+start_quiet(0, ManagerPid) ->  % last process
+    %% Tell the manager we've started
+    ManagerPid ! {started, self()},
+    wait_last();
+start_quiet(Count, ManagerPid) ->
+    NextPid = spawn(?MODULE, start_quiet, [Count-1, ManagerPid]),
+    wait(NextPid).
+
+wait(NextPid) ->
     %% Wait for a stop message
     receive
         %% send it on to the next process and exit.
-        {stop, Pid} -> NextPid ! {stop, Pid}
+        {stop, FirstPid} -> NextPid ! {stop, FirstPid}
     end.
 
+wait_last() ->
+    %% Wait for a stop message
+    receive
+        {stop, FirstPid} ->
+            FirstPid ! {stop, self()}
+    end.
 
 stop(FirstPid, LastPid) ->
     FirstPid ! {stop, self()},
@@ -76,3 +96,22 @@ stop(FirstPid, LastPid) ->
     receive
         {stop, LastPid} -> ok
     end.
+
+dump() ->
+    receive
+        {done, Pid} -> Pid ! done;
+        {count, 0} -> io:format("0!~n");
+        {count, Count} -> io:format("~p.", [Count]);
+        {Fmt, Args} -> io:format(Fmt, Args);
+        Msg -> io:format(Msg)
+    end,
+    dump().
+
+ignore() ->
+    receive
+        {done, Pid} -> Pid ! done;
+        {count, _Count} -> ok;
+        {Fmt, Args} -> io:format(Fmt, Args);
+        Msg -> io:format(Msg)
+    end,
+    ignore().
