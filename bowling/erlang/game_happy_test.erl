@@ -6,8 +6,6 @@
 %% Needs to be compiled so we can specify our output functions.
 -mode(compile).
 
--import(game_happy).
-
 main([]) ->
     test([
         {0,   [0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0]},

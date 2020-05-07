@@ -6,8 +6,6 @@
 
 -mode(compile).  % for better performance
 
--import(game).
-
 
 main([]) ->
     test([
