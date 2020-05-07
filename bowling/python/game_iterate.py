@@ -1,20 +1,15 @@
-#!/usr/bin/python
+#!/usr/local/bin/python3
 
 # This is the Erlang solution, translated into Python.
 
-def score(rolls, frame=1, total=0):
-    while rolls and frame <= 10:
-        if rolls[0] == 10:
+def score(rolls, total=0):
+    for frame in range(10):
+        if sum(rolls[0:1]) == 10:
             rolls = rolls[1:]
-            bonus = sum(rolls[0:2]) if rolls else 0
-            total += 10 + bonus
-        elif len(rolls) == 1:
-            total += rolls[0]
-            rolls = []
+            total += 10 + sum(rolls[0:2])
         elif sum(rolls[0:2]) == 10:
             rolls = rolls[2:]
-            bonus = rolls[0] if rolls else 0
-            total += 10 + bonus
+            total += 10 + sum(rolls[0:1])
         else:
             total += sum(rolls[0:2])
             rolls = rolls[2:]
@@ -49,7 +44,7 @@ def run_tests(tests, passes=0, fails=0):
         expected, rolls = test
         total = score(rolls)
         if total == expected:
-            print(".")
+            print(".", end='')
             run_tests(tests[1:], passes + 1, fails)
         else:
             print("Fail: expected=%d, scored=%d" % (expected, total))
