@@ -2,9 +2,7 @@ from Frame import Frame
 
 class Game(object):
     def __init__(self):
-        self.frames = []
-        for i in range(10):
-            self.frames.append(Frame())
+        self.frames = [Frame() for _ in range(10)]
   
     def add_roll(self, pinCount):
         for frame in self.frames:
@@ -16,4 +14,3 @@ class Game(object):
         for frame in self.frames:
             total += frame.score()
         return total
-
