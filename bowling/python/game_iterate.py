@@ -13,7 +13,6 @@ def score(rolls, total=0):
         else:
             total += sum(rolls[0:2])
             rolls = rolls[2:]
-        frame += 1
     return total
 
 
